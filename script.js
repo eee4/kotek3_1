@@ -19,7 +19,12 @@
 	async function getCountryData(capital) {
 		let result = "NORESPONSE";
 		const data = await fetch(`https://restcountries.com/v3.1/capital/${capital}`)
-			.then(response => response.json())
+			.then(response => {
+				if (response.ok === true) return response.json();
+				else {
+					if (response.status == 404) return [{"error": "Capital not found"}];
+				}
+			})
 			.then(data => {
 			 	console.log(data[0]);
 			 	result = data[0];
@@ -31,11 +36,19 @@
 
 		ev.preventDefault();
 		answer.innerHTML = "";
-		
+
 		const capital = document.getElementById("capitalTextBox").value;
+		if (/^([\s])+$/.exec(capital) !== null) {
+			answer.innerHTML = `<span style="color: red;"><b>Error: Capital cannot be empty.</b></span>`;
+			return;
+		}
+
 		const countryData = await getCountryData(capital);
 		if (typeof(countryData) !== "object") {
-			answer.innerHTML = `<span>Error: No data for ${capital}.</span>`;
+			answer.innerHTML = `<span style="color: red;"><b>Error: No reply for ${capital}.</b></span>`;
+			return;
+		} else if (countryData?.error) {
+			answer.innerHTML = `<span style="color: red;"><b>Error: ${countryData.error}.</b></span>`;
 			return;
 		}
 
